@@ -11,3 +11,7 @@
 # OS and editor noise.
 .DS_Store
 *.swp
+
+# Editors
+
+.idea/

@@ -12,11 +12,11 @@
 /// # Examples
 ///
 /// ```
-/// assert_eq!(crwst::greeting(), "Hello from crwst!");
+/// assert_eq!(rizoma::greeting(), "Hello from rizoma!");
 /// ```
 #[must_use]
 pub fn greeting() -> &'static str {
-    "Hello from crwst!"
+    "Hello from rizoma!"
 }
 
 #[cfg(test)]
@@ -25,6 +25,6 @@ mod tests {
 
     #[test]
     fn greeting_mentions_the_crate() {
-        assert!(greeting().contains("crwst"));
+        assert!(greeting().contains("rizoma"));
     }
 }

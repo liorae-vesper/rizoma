@@ -7,7 +7,7 @@ vulnerability auditing, a shared compiler cache, and CI that runs the same
 gates — without adding a task runner, a build system, or any architectural
 opinion about what the crate should do.
 
-The crate itself is deliberately trivial (`crwst::greeting()`). This repository
+The crate itself is deliberately trivial (`rizoma::greeting()`). This repository
 is a development-tooling template, not an application skeleton.
 
 ## What is in the box
@@ -59,14 +59,14 @@ cd my-project
 rm -rf .git && git init -b main
 ```
 
-Then rename the crate. `crwst` appears in these places:
+Then rename the crate. `rizoma` appears in these places:
 
 | File | What to change |
 | --- | --- |
 | `Cargo.toml` | `[package] name` (and `description`) |
 | `src/lib.rs` | the doctest and the greeting text |
-| `src/main.rs` | the `crwst::` path |
-| `tests/smoke.rs` | the `crwst::` path |
+| `src/main.rs` | the `rizoma::` path |
+| `tests/smoke.rs` | the `rizoma::` path |
 | `README.md` | this file |
 
 `Cargo.lock` updates itself on the next `cargo` command. Nothing else refers to

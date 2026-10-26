@@ -6,6 +6,6 @@
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
-    println!("{}", crwst::greeting());
+    println!("{}", rizoma::greeting());
     ExitCode::SUCCESS
 }

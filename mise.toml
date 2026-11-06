@@ -1,3 +1,15 @@
 [tools]
 sbt = "2"
 scala = "3.10.0"
+
+[tasks.lint]
+description = "Compile main and test sources with strict Scala warnings"
+run = "sbt 'compile; Test / compile'"
+
+[tasks.format]
+description = "Format Scala source files"
+run = "scala fmt src"
+
+[tasks.format-check]
+description = "Check formatting of Scala source files"
+run = "scala fmt --check src"

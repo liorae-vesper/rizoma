@@ -4,6 +4,14 @@ lazy val root = rootProject
   .settings(
     name := "rizoma",
     idePackagePrefix := Some("rizoma"),
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Wunused:all",
+      "-Wvalue-discard",
+      "-Werror"
+    ),
     libraryDependencies ++= Seq(
       //You can add library dependencies here, for example,
       //"org.scalatest" %% "scalatest" % "3.2.19" % Test,

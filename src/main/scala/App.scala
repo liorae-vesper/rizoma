@@ -1,7 +1,7 @@
 package rizoma
 
 @main
-def main(): Unit = {
-  println("")
-}
+def main(): Unit =
+  println("Welcome")
+
 

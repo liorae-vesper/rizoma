@@ -1,0 +1,3 @@
+[tools]
+sbt = "2"
+scala = "3.9.0"

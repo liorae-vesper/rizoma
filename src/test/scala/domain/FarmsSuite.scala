@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import domain.AreaError.{AreaNotFinite, AreaNotGreaterThanZero}
+
 class FarmsSuite extends munit.FunSuite:
   test("farm names are trimmed"):
     assertEquals(FarmName.from("  Cedar Grove  "), FarmName.from("Cedar Grove"))
@@ -16,31 +18,31 @@ class FarmsSuite extends munit.FunSuite:
 
   test("farm registration maps invalid coordinates to InvalidLocation"):
     assertEquals(
-      RegisterFarm.from("Cedar Grove", 91.0, 0.0, 12.5),
+      RegisterFarm.from("Cedar Grove", 91.0, 0.0, 12.5, UnitOfArea.SquareMeters),
       Left(RegisterFarmError.InvalidLocation)
     )
 
   test("farm registration maps invalid names to InvalidName"):
     assertEquals(
-      RegisterFarm.from("   ", 45.0, 90.0, 12.5),
+      RegisterFarm.from("   ", 45.0, 90.0, 12.5, UnitOfArea.SquareMeters),
       Left(RegisterFarmError.InvalidName(FarmName.Error.Empty))
     )
 
   test("farm registration succeeds for a valid name and location"):
-    assert(RegisterFarm.from("Cedar Grove", 45.0, 90.0, 12.5).isRight)
+    assert(RegisterFarm.from("Cedar Grove", 45.0, 90.0, 12.5, UnitOfArea.SquareMeters).isRight)
 
   test("farm registration rejects non-positive area"):
     List(0.0, -1.0).foreach { area =>
       assertEquals(
-        RegisterFarm.from("Cedar Grove", 45.0, 90.0, area),
-        Left(RegisterFarmError.InvalidArea)
+        RegisterFarm.from("Cedar Grove", 45.0, 90.0, area, UnitOfArea.SquareMeters),
+        Left(RegisterFarmError.InvalidArea(AreaNotGreaterThanZero))
       )
     }
 
   test("farm registration rejects non-finite area"):
     List(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity).foreach { area =>
       assertEquals(
-        RegisterFarm.from("Cedar Grove", 45.0, 90.0, area),
-        Left(RegisterFarmError.InvalidArea)
+        RegisterFarm.from("Cedar Grove", 45.0, 90.0, area, UnitOfArea.SquareMeters),
+        Left(RegisterFarmError.InvalidArea(AreaNotFinite))
       )
     }

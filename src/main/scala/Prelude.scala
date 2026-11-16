@@ -16,7 +16,6 @@ object SystemClock extends Prelude.Clock:
 object DefaultIdGenerator extends Prelude.IdGenerator:
   override def next(): Id = Id.generate()
 
-
 /** A UUID using the time-ordered UUID version 7 layout. */
 final class UUIDv7 private (
     val mostSignificantBits: Long,
@@ -37,7 +36,9 @@ final class UUIDv7 private (
     case _ => false
 
   override def hashCode(): Int =
-    31 * java.lang.Long.hashCode(mostSignificantBits) + java.lang.Long.hashCode(leastSignificantBits)
+    31 * java.lang.Long.hashCode(mostSignificantBits) + java.lang.Long.hashCode(
+      leastSignificantBits
+    )
 
   override def toString: String =
     s"${UUIDv7.hex(mostSignificantBits >>> 32, 8)}-" +

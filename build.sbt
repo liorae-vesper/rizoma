@@ -3,6 +3,7 @@ scalaVersion := "3.10.0"
 lazy val root = rootProject
   .settings(
     name := "rizoma",
+    semanticdbEnabled := true,
     idePackagePrefix := Some("rizoma"),
     scalacOptions ++= Seq(
       "-deprecation",

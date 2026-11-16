@@ -1,10 +1,25 @@
 [tools]
+cocogitto = "7.0.0"
+hk = "2.12.0"
+pkl = "0.33.0"
 sbt = "2"
 scala = "3.10.0"
 
+[tasks.hooks-install]
+description = "Install repository Git hooks with mise-managed tools"
+run = "hk install --mise"
+
 [tasks.lint]
-description = "Compile main and test sources with strict Scala warnings"
-run = "sbt 'compile; Test / compile'"
+description = "Compile main and test sources with strict warnings and check Scalafix"
+run = "sbt --batch --server 'compile; Test / compile; scalafixAll --check'"
+
+[tasks.scalafix]
+description = "Apply Scalafix to main and test sources (allow warnings while fixing)"
+run = "sbt --batch --server 'set scalacOptions -= \"-Werror\"; scalafixAll'"
+
+[tasks.scalafix-check]
+description = "Check Scalafix rules for main and test sources"
+run = "sbt --batch --server 'scalafixAll --check'"
 
 [tasks.format]
 description = "Format Scala source files"

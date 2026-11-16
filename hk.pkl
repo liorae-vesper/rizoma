@@ -1,0 +1,22 @@
+amends "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Config.pkl"
+
+import "package://github.com/jdx/hk/releases/download/v2.12.0/hk@2.12.0#/Builtins.pkl"
+
+steps {
+  ["scala"] {
+    glob = List("**/*.scala", "build.sbt", "project/**", ".scalafmt.conf", ".scalafix.conf", "mise.toml")
+    check = "mise run format-check && mise run lint"
+  }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = false
+    stage = false
+  }
+  ["commit-msg"] {
+    steps {
+      ["cocogitto"] = Builtins.cocogitto_commit_msg
+    }
+  }
+}

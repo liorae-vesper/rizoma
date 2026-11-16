@@ -5,7 +5,7 @@ import java.time.Instant
 
 object Prelude:
   trait IdGenerator:
-    def next(): Id
+    def next(): Either[UUIDv7.GenerationError, Id]
 
   trait Clock:
     def now(): Instant
@@ -14,7 +14,7 @@ object SystemClock extends Prelude.Clock:
   override def now(): Instant = Instant.now()
 
 object DefaultIdGenerator extends Prelude.IdGenerator:
-  override def next(): Id = Id.generate()
+  override def next(): Either[UUIDv7.GenerationError, Id] = Id.generate()
 
 /** A UUID using the time-ordered UUID version 7 layout. */
 final class UUIDv7 private (
@@ -48,6 +48,10 @@ final class UUIDv7 private (
       s"${UUIDv7.hex(leastSignificantBits & 0xffffffffffffL, 12)}"
 
 object UUIDv7:
+  /** Errors returned when generating a UUIDv7. */
+  enum GenerationError:
+    case TimestampOutOfRange
+
   /** Errors returned when parsing a UUIDv7 string. */
   enum ParseError:
     case InvalidFormat
@@ -55,6 +59,7 @@ object UUIDv7:
     case InvalidVariant
 
   private val TimestampMask = 0x0000ffffffffffffL
+  private val TimestampUpperBound = Instant.ofEpochMilli(TimestampMask + 1)
   private val RandomBMask = 0x3fffffffffffffffL
   private val random = new SecureRandom()
 
@@ -67,19 +72,24 @@ object UUIDv7:
       if mostSignificantComparison != 0 then mostSignificantComparison
       else java.lang.Long.compareUnsigned(left.leastSignificantBits, right.leastSignificantBits)
 
-  /** Creates a UUIDv7 using the current Unix time and random bits. */
-  def generate(): UUIDv7 = generate(Instant.now())
+  /** Creates a UUIDv7 using the current Unix time, returning an error outside the 48-bit range. */
+  def generate(): Either[GenerationError, UUIDv7] = generate(Instant.now())
 
-  /** Creates a UUIDv7 using the supplied timestamp and random bits. */
-  def generate(timestamp: Instant): UUIDv7 =
-    val millis = timestamp.toEpochMilli
-    require(millis >= 0 && millis <= TimestampMask, "UUIDv7 timestamp must fit in 48 unsigned bits")
-
-    val randomA = random.nextInt(1 << 12).toLong
-    val randomB = random.nextLong() & RandomBMask
-    val mostSignificantBits = (millis << 16) | 0x7000L | randomA
-    val leastSignificantBits = 0x8000000000000000L | randomB
-    new UUIDv7(mostSignificantBits, leastSignificantBits)
+  /** Creates a UUIDv7 from a timestamp, rejecting values outside the 48-bit millisecond range.
+    *
+    * The range is checked before conversion to milliseconds so even `Instant.MIN` and `Instant.MAX`
+    * return `TimestampOutOfRange` without overflowing.
+    */
+  def generate(timestamp: Instant): Either[GenerationError, UUIDv7] =
+    if timestamp.isBefore(Instant.EPOCH) || !timestamp.isBefore(TimestampUpperBound) then
+      Left(GenerationError.TimestampOutOfRange)
+    else
+      val millis = timestamp.toEpochMilli
+      val randomA = random.nextInt(1 << 12).toLong
+      val randomB = random.nextLong() & RandomBMask
+      val mostSignificantBits = (millis << 16) | 0x7000L | randomA
+      val leastSignificantBits = 0x8000000000000000L | randomB
+      Right(new UUIDv7(mostSignificantBits, leastSignificantBits))
 
   /** Parses a canonical UUIDv7 string. Hex digits may be upper or lower case. */
   def parse(value: String): Either[ParseError, UUIDv7] =
@@ -112,8 +122,8 @@ object UUIDv7:
 opaque type Id = UUIDv7
 
 object Id:
-  /** Generates a new application identifier. */
-  def generate(): Id = UUIDv7.generate()
+  /** Generates an identifier, returning an error if the current timestamp is out of range. */
+  def generate(): Either[UUIDv7.GenerationError, Id] = UUIDv7.generate()
 
   /** Parses an application identifier from its canonical UUIDv7 string form. */
   def parse(value: String): Either[UUIDv7.ParseError, Id] = UUIDv7.parse(value)

@@ -88,18 +88,24 @@ class PlotSuite extends munit.ScalaCheckSuite:
 
   test("plot names and patch construction cannot bypass their boundaries"):
     assert(compileErrors("val name: Plot.Name = \"raw\"").nonEmpty)
-    assert(compileErrors("val id: Plot.PlotId = Id.generate()").nonEmpty)
     assert(compileErrors("""
-      for
-        name <- Plot.Name.from("North")
-        area <- Area.from(1)
-        geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
-      yield Plot.Patch(geometry, area, name, Id.generate(), Plot.PlotId.from(Id.generate()))
+      for uuid <- UUIDv7.parse("00000000-0000-7000-8000-000000000000") yield
+        val id: Plot.PlotId = Id.fromUUIDv7(uuid)
+        id
     """).nonEmpty)
     assert(compileErrors("""
       for
         name <- Plot.Name.from("North")
         area <- Area.from(1)
         geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
-      yield new Plot.Patch(geometry, area, name, Id.generate(), Plot.PlotId.from(Id.generate()))
+        id <- Id.parse("00000000-0000-7000-8000-000000000000")
+      yield Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id))
+    """).nonEmpty)
+    assert(compileErrors("""
+      for
+        name <- Plot.Name.from("North")
+        area <- Area.from(1)
+        geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
+        id <- Id.parse("00000000-0000-7000-8000-000000000000")
+      yield new Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id))
     """).nonEmpty)

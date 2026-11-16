@@ -1,5 +1,10 @@
 scalaVersion := "3.10.0"
 
+ThisBuild / scalafixDependencies ++= Seq(
+  "io.github.dedis" %% "scapegoat-scalafix" % "1.1.4",
+  "io.github.tanin47" %% "scalafix-forbidden-symbol" % "1.0.0"
+)
+
 lazy val root = rootProject
   .settings(
     name := "rizoma",

@@ -210,7 +210,7 @@ object Polygon:
 
   /** Checks ring length and closure; accepts an empty collection of rings. */
   private def validRings(rings: List[List[Position]]): Boolean =
-    rings.forall(ring => ring.size >= 4 && ring.head == ring.last)
+    rings.forall(ring => ring.size >= 4 && ring.headOption == ring.lastOption)
 
   /** Validates GeoJSON rings before splitting exterior and holes. */
   private[domain] def fromRings(rings: List[List[Position]]): Option[Polygon] =

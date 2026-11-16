@@ -116,12 +116,14 @@ class FarmsSuite extends munit.ScalaCheckSuite:
         name <- Farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield Farm.Patch(name, position, area, Id.generate())
+        id <- Id.parse("00000000-0000-7000-8000-000000000000")
+      yield Farm.Patch(name, position, area, id)
     """).nonEmpty)
     assert(compileErrors("""
       for
         name <- Farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield new Farm.Patch(name, position, area, Id.generate())
+        id <- Id.parse("00000000-0000-7000-8000-000000000000")
+      yield new Farm.Patch(name, position, area, id)
     """).nonEmpty)

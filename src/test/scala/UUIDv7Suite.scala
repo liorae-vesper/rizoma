@@ -34,16 +34,20 @@ class UUIDv7Suite extends munit.FunSuite:
 
   test("equal UUIDv7 values have matching hashes and deduplicate in hashed collections"):
     val uuid = UUIDv7.generate(Instant.ofEpochMilli(1_700_000_000_123L))
-    val parsed = UUIDv7.parse(uuid.toString).toOption.get
+    val result = for parsed <- UUIDv7.parse(uuid.toString) yield
+      assertEquals(parsed, uuid)
+      assertEquals(parsed.hashCode, uuid.hashCode)
+      assertEquals(Set(uuid, parsed).size, 1)
 
-    assertEquals(parsed, uuid)
-    assertEquals(parsed.hashCode, uuid.hashCode)
-    assertEquals(Set(uuid, parsed).size, 1)
+    assertEquals(result, Right(()))
 
   test("parsing accepts uppercase hexadecimal digits"):
-    val expected = UUIDv7.parse("00000000-0000-7000-8000-000000000000").toOption.get
+    val result = for
+      expected <- UUIDv7.parse("00000000-0000-7000-8000-000000000000")
+      parsed <- UUIDv7.parse(expected.toString.toUpperCase)
+    yield assertEquals(parsed, expected)
 
-    assertEquals(UUIDv7.parse(expected.toString.toUpperCase), Right(expected))
+    assertEquals(result, Right(()))
 
   test("parsing rejects malformed strings"):
     assertEquals(UUIDv7.parse("not-a-uuid"), Left(UUIDv7.ParseError.InvalidFormat))

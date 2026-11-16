@@ -32,41 +32,52 @@ object Coordinates:
 
 /** A geographic position used inside geometry coordinate arrays.
   *
-  * Use `Position.from` to validate coordinates and optional altitude together.
+  * Components follow GeoJSON order: longitude, latitude, and optional altitude. Use `Position.from`
+  * to validate them together; named arguments help avoid swapping the two horizontal ordinates.
   *
-  * @param latitude
-  *   latitude in decimal degrees, between -90 and 90 inclusive
   * @param longitude
   *   longitude in decimal degrees, between -180 and 180 inclusive
+  * @param latitude
+  *   latitude in decimal degrees, between -90 and 90 inclusive
   * @param altitude
   *   optional altitude in meters; the factory requires a finite value
   */
 final case class Position private (
-    latitude: Coordinates.Latitude,
     longitude: Coordinates.Longitude,
+    latitude: Coordinates.Latitude,
     altitude: Option[Double]
 )
 
 object Position:
-  /** Creates a geographic point only when both coordinates are valid.
+  /** Creates a geographic point from longitude and latitude, in GeoJSON order.
     *
+    * @param longitude
+    *   finite longitude in decimal degrees, between -180 and 180 inclusive
+    * @param latitude
+    *   finite latitude in decimal degrees, between -90 and 90 inclusive
     * @return
     *   the position without altitude, or `None` for out-of-range or non-finite coordinates
     */
-  def from(latitude: Double, longitude: Double): Option[Position] =
-    from(latitude, longitude, None)
+  def from(longitude: Double, latitude: Double): Option[Position] =
+    from(longitude = longitude, latitude = latitude, altitude = None)
 
-  /** Creates a position with an optional finite altitude in meters.
+  /** Creates a position from longitude, latitude, and optional altitude, in GeoJSON order.
     *
+    * @param longitude
+    *   finite longitude in decimal degrees, between -180 and 180 inclusive
+    * @param latitude
+    *   finite latitude in decimal degrees, between -90 and 90 inclusive
+    * @param altitude
+    *   optional finite altitude in meters
     * @return
     *   the position, or `None` for invalid coordinates or a non-finite altitude
     */
-  def from(latitude: Double, longitude: Double, altitude: Option[Double]): Option[Position] =
+  def from(longitude: Double, latitude: Double, altitude: Option[Double]): Option[Position] =
     for
-      lat <- Coordinates.Latitude.from(latitude)
       lon <- Coordinates.Longitude.from(longitude)
+      lat <- Coordinates.Latitude.from(latitude)
       _ <- Option.when(altitude.forall(_.isFinite))(())
-    yield new Position(lat, lon, altitude)
+    yield new Position(longitude = lon, latitude = lat, altitude = altitude)
 
   /** GeoJSON positions use longitude, latitude, and optional altitude. */
   given Encoder[Position] = Encoder.instance { point =>
@@ -88,9 +99,10 @@ object Position:
       }
       .flatMap {
         case longitude :: latitude :: Nil =>
-          from(latitude, longitude).toRight("Invalid position")
+          from(longitude = longitude, latitude = latitude).toRight("Invalid position")
         case longitude :: latitude :: altitude :: Nil =>
-          from(latitude, longitude, Some(altitude)).toRight("Invalid position")
+          from(longitude = longitude, latitude = latitude, altitude = Some(altitude))
+            .toRight("Invalid position")
         case _ => Left("A position requires longitude, latitude, and optional altitude")
       }
   }

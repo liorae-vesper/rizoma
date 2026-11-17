@@ -24,6 +24,7 @@ lazy val root = rootProject
       "org.scalameta" %% "munit" % "1.3.6" % Test,
       "org.scalameta" %% "munit-scalacheck" % "1.3.1" % Test,
       "io.circe" %% "circe-core" % "0.14.17",
-      "io.circe" %% "circe-parser" % "0.14.17"
+      "io.circe" %% "circe-parser" % "0.14.17",
+      "org.locationtech.jts" % "jts-core" % "1.20.0"
     )
   )

@@ -33,7 +33,9 @@ object Coordinates:
 /** A geographic position used inside geometry coordinate arrays.
   *
   * Components follow GeoJSON order: longitude, latitude, and optional altitude. Use `Position.from`
-  * to validate them together; named arguments help avoid swapping the two horizontal ordinates.
+  * to validate them together; named arguments help avoid swapping the two horizontal ordinates. The
+  * constructor and `copy` cannot bypass validation. Circe encodes a position as a two-element
+  * longitude-latitude array, or a three-element array with altitude, and decodes the same arrays.
   *
   * @param longitude
   *   longitude in decimal degrees, between -180 and 180 inclusive
@@ -111,9 +113,55 @@ object Position:
   *
   * Companion codecs encode the GeoJSON `type` discriminator and coordinate arrays. Geometry
   * constructors are private; companion `from` factories validate inputs and return `None` when
-  * construction fails. Decoders use the same factories. Encoders preserve validated values.
+  * construction fails. `copy` cannot bypass validation. Decoders use the same factories and reject
+  * missing or malformed payloads, unknown types, and mismatched concrete types. Encoders preserve
+  * validated values; concrete and `Geometry` codecs support round trips. Collections use the
+  * `geometries` member, while other types use `coordinates`.
+  *
+  * Spatial predicates treat longitude and latitude as Cartesian coordinates, ignoring altitude.
+  * They do not wrap the antimeridian or compute geodesic relationships. Polygon topology is not
+  * validated here; predicate results are only guaranteed for topologically valid input. A
+  * zero-length line is treated as a point. Polygon holes exclude their interiors, and gaps between
+  * multipolygon members remain outside. Nested, mixed geometry collections are treated as unions;
+  * multiple members can together contain a geometry even if no single member does.
   */
-sealed trait Geometry
+sealed trait Geometry:
+  /** Tests whether every point of `other` belongs to this geometry and their interiors intersect.
+    *
+    * This relation is directional. A point or line lying entirely on a polygon boundary is not
+    * contained, but a line whose endpoints are on the boundary and whose interior is inside can be.
+    * An open line contains points in its interior but not its endpoints. Entire segments and areas
+    * are checked: endpoints inside a concave polygon do not suffice if the connecting segment
+    * leaves it, and a polygon spanning a hole is not contained. Partial overlap alone is not
+    * containment.
+    *
+    * Every component of `other` must be covered; for example, a multipoint with an outside point is
+    * not contained. Collection members can jointly cover the target, including its point
+    * components. A nonempty geometry contains itself; either empty operand yields false.
+    */
+  final def contains(other: Geometry): Boolean = GeometryTopology.contains(this, other)
+
+  /** Tests whether the geometries share any point, including edges and vertices.
+    *
+    * This symmetric relation includes containment, overlapping polygons, crossing lines, and a
+    * point or line on a polygon boundary, including a hole boundary. A geometry wholly inside a
+    * hole without touching its boundary does not intersect the polygon. Overlapping bounding boxes
+    * alone are insufficient.
+    *
+    * Any shared point in a multi-geometry or collection suffices; gaps remain outside. A nonempty
+    * geometry intersects itself. Returns false if either geometry is empty.
+    */
+  final def intersects(other: Geometry): Boolean = GeometryTopology.intersects(this, other)
+
+  /** Tests whether the geometries touch without their interiors intersecting.
+    *
+    * Shared edges and vertices count, as do a point or line on a polygon boundary, including a hole
+    * boundary. Interior overlap, containment, disjointness, and equal points do not count. A
+    * collection that touches in one place but also overlaps the other's interior is not a neighbor.
+    * Returns false for empty geometries. Collections are evaluated as unions. This relation is
+    * symmetric.
+    */
+  final def isNeighbor(other: Geometry): Boolean = GeometryTopology.isNeighbor(this, other)
 
 /** A single position, encoded as a GeoJSON Point.
   *
@@ -154,7 +202,9 @@ object MultiPoint:
   */
 final case class LineString private (coordinates: List[Position]) extends Geometry
 object LineString:
-  /** Creates a line with at least two positions; returns `None` for shorter input. */
+  /** Creates a line with at least two positions; returns `None` for shorter input. Repeated
+    * positions are accepted, including a line whose two endpoints are identical.
+    */
   def from(coordinates: List[Position]): Option[LineString] =
     Option.when(coordinates.size >= 2)(new LineString(coordinates))
 
@@ -202,7 +252,8 @@ final case class Polygon private (vertices: List[Position], holes: List[List[Pos
 
 object Polygon:
   /** Creates a polygon with closed rings of at least four positions. Returns `None` for an invalid
-    * exterior or hole. Empty exterior and holes form an empty polygon.
+    * exterior or hole, including an empty exterior with nonempty holes. Empty exterior and holes
+    * form an empty polygon; a single empty ring is not a valid polygon ring.
     */
   def from(vertices: List[Position], holes: List[List[Position]] = Nil): Option[Polygon] =
     val rings = if vertices.isEmpty && holes.isEmpty then Nil else vertices :: holes

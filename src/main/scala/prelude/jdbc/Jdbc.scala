@@ -1,4 +1,5 @@
-package rizoma.prelude.jdbc
+package rizoma
+package prelude.jdbc
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Types}
 import javax.sql.DataSource
@@ -16,10 +17,9 @@ type SqlParam =
   *
   * These functions do not own their Connection. The caller manages its lifecycle.
   */
-// JDBC represents SQL NULL with null at the driver boundary.
-@SuppressWarnings(Array("scalafix:DisableSyntax"))
 private object Jdbc:
   /** Binds positional parameters in order, starting at index 1. */
+  @SuppressWarnings(Array("scalafix:DisableSyntax"))
   def bind(stmt: PreparedStatement, params: Seq[SqlParam]): Unit =
     params.zipWithIndex.foreach { case (value, index) =>
       val i = index + 1

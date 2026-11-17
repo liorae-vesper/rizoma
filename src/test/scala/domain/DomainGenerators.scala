@@ -57,8 +57,8 @@ private[domain] object DomainGenerators:
       id <- valid(Id.parse(f"$timestamp%08x-0000-7000-8000-000000000000"))
     yield id
 
-  val geometries: Gen[MultiPolygon] =
-    val polygon = for
+  val polygons: Gen[Polygon] =
+    for
       latitude <- Gen.choose(-89.0, 89.0)
       longitude <- Gen.choose(-179.0, 179.0)
       first <- valid(Position.from(longitude = longitude, latitude = latitude))
@@ -66,8 +66,10 @@ private[domain] object DomainGenerators:
       third <- valid(Position.from(longitude = longitude + 0.5, latitude = latitude))
       result <- valid(Polygon.from(List(first, second, third, first)))
     yield result
+
+  val geometries: Gen[MultiPolygon] =
     for
       count <- Gen.choose(0, 3)
-      polygons <- Gen.listOfN(count, polygon)
-      geometry <- valid(MultiPolygon.from(polygons))
+      members <- Gen.listOfN(count, polygons)
+      geometry <- valid(MultiPolygon.from(members))
     yield geometry

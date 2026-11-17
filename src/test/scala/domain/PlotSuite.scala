@@ -99,7 +99,7 @@ class PlotSuite extends munit.ScalaCheckSuite:
         area <- Area.from(1)
         geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id))
+      yield Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id), Plot.Status.Active)
     """).nonEmpty)
     assert(compileErrors("""
       for
@@ -107,5 +107,30 @@ class PlotSuite extends munit.ScalaCheckSuite:
         area <- Area.from(1)
         geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield new Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id))
+      yield new Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id), Plot.Status.Active)
     """).nonEmpty)
+
+  property("plots default to active and retain their status when patching other fields"):
+    forAll(geometries, areas, names, ids, ids) { (geometry, area, name, farmId, plotId) =>
+      val result = for validated <- Plot.Name.from(name) yield
+        val registration = Plot.Register(geometry, area, validated, farmId)
+        assertEquals(registration.status, Plot.Status.Active)
+        Plot.Status.values.foreach { status =>
+          val view = Plot.View(geometry, area, validated, farmId, Plot.PlotId.from(plotId), status)
+          assertEquals(view.patch(geometry, area, name).map(_.status), Right(status))
+        }
+      assertEquals(result, Right(()))
+    }
+
+  property("plot patches can explicitly change the status while retaining identities"):
+    forAll(geometries, areas, names, ids, ids) { (geometry, area, name, farmId, plotId) =>
+      val result = for
+        validated <- Plot.Name.from(name)
+        view = Plot.View(geometry, area, validated, farmId, Plot.PlotId.from(plotId))
+        patch <- view.patch(geometry, area, name, Plot.Status.Resting)
+      yield
+        assertEquals(patch.status, Plot.Status.Resting)
+        assertEquals(patch.plotId, view.plotId)
+        assertEquals(patch.currentFarm, farmId)
+      assertEquals(result, Right(()))
+    }

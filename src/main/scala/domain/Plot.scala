@@ -3,6 +3,10 @@ package domain
 
 /** Plot values and the commands used to register, update, or remove them. */
 object Plot:
+  /** Whether a plot is in active use or resting between crops. */
+  enum Status:
+    case Active, Resting
+
   /** A plot identity distinct from a general application [[Id]]. */
   opaque type PlotId = Id
 
@@ -61,8 +65,16 @@ object Plot:
     *   the normalized plot name
     * @param farmId
     *   the farm to which the plot will belong
+    * @param status
+    *   the plot's current use; defaults to active
     */
-  final case class Register(geometry: MultiPolygon, area: Area, name: Name, farmId: Id)
+  final case class Register(
+      geometry: MultiPolygon,
+      area: Area,
+      name: Name,
+      farmId: Id,
+      status: Status = Status.Active
+  )
 
   /** A replacement of a plot's editable values, constructed within [[Plot]].
     *
@@ -76,13 +88,16 @@ object Plot:
     *   the existing farm identity retained by the patch
     * @param plotId
     *   the identity of the plot being updated
+    * @param status
+    *   the replacement use status
     */
   final case class Patch private[Plot] (
       newGeometry: MultiPolygon,
       newArea: Area,
       newName: Name,
       currentFarm: Id,
-      plotId: PlotId
+      plotId: PlotId,
+      status: Status
   )
 
   /** A command requesting removal of a plot.
@@ -104,13 +119,16 @@ object Plot:
     *   the farm identity retained by patches
     * @param plotId
     *   the plot identity retained by patches
+    * @param status
+    *   the current use status; defaults to active
     */
   final case class View(
       geometry: MultiPolygon,
       area: Area,
       name: Name,
       currentFarm: Id,
-      plotId: PlotId
+      plotId: PlotId,
+      status: Status = Status.Active
   ):
 
     /** Prepares replacement values while retaining the plot and farm identities.
@@ -123,13 +141,16 @@ object Plot:
       *   the already validated replacement declared area
       * @param newName
       *   the raw replacement name, trimmed and validated by [[Name.from]]
+      * @param newStatus
+      *   the replacement status; defaults to the current status
       * @return
       *   a patch command, or `InvalidName` when the replacement name is invalid
       */
     def patch(
         newGeometry: MultiPolygon,
         newArea: Area,
-        newName: String
+        newName: String,
+        newStatus: Status = status
     ): Either[Constraints, Patch] =
       for name <- Name.from(newName).left.map(Constraints.InvalidName.apply)
-      yield Patch(newGeometry, newArea, name, currentFarm, plotId)
+      yield Patch(newGeometry, newArea, name, currentFarm, plotId, newStatus)

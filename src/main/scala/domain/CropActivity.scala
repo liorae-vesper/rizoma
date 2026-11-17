@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import rizoma.prelude.Id
+
 import java.time.Instant
 import java.util.Locale
 

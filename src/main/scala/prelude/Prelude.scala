@@ -1,11 +1,12 @@
 package rizoma
+package prelude
 
 import java.security.SecureRandom
 import java.time.Instant
 
 object Prelude:
-  trait IdGenerator:
-    def next(): Either[UUIDv7.GenerationError, Id]
+  trait IdGenerator[E]:
+    def next(): Either[E, Id]
 
   trait Clock:
     def now(): Instant
@@ -13,7 +14,7 @@ object Prelude:
 object SystemClock extends Prelude.Clock:
   override def now(): Instant = Instant.now()
 
-object DefaultIdGenerator extends Prelude.IdGenerator:
+object DefaultIdGenerator extends Prelude.IdGenerator[UUIDv7.GenerationError]:
   override def next(): Either[UUIDv7.GenerationError, Id] = Id.generate()
 
 /** A UUID using the time-ordered UUID version 7 layout. */

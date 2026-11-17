@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import prelude.Id
+
 /** Farm values and the commands used to register or update them. */
 object Farm:
   /** A trimmed, nonempty farm name of at most 100 UTF-16 code units. */

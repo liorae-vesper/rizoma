@@ -1,6 +1,9 @@
 package rizoma
+package prelude
 
 import java.time.Instant
+
+import prelude.{DefaultIdGenerator, Id, UUIDv7}
 
 class UUIDv7Suite extends munit.FunSuite:
   test("generation stores the timestamp, version, and RFC variant"):

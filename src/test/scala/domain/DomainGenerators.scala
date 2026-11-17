@@ -2,6 +2,7 @@ package rizoma
 package domain
 
 import org.scalacheck.Gen
+import rizoma.prelude.Id
 
 private[domain] object DomainGenerators:
   val names: Gen[String] =

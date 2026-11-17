@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import prelude.Id
+
 /** Plot values and the commands used to register, update, or remove them. */
 object Plot:
   /** Whether a plot is in active use or resting between crops. */

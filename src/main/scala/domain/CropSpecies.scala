@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import prelude.Id
+
 /** Crop species and the commands used to register, update, or remove them. */
 object CropSpecies:
   /** A species identity, distinct from plot and crop cycle identities. */

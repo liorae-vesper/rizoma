@@ -1,6 +1,8 @@
 package rizoma
 package domain
 
+import rizoma.prelude.Id
+
 import java.time.Instant
 
 /** A species grown on an occupied polygon within a plot, with optional start and end timestamps. */

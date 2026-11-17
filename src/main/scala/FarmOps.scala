@@ -1,5 +1,7 @@
 package rizoma
 
+import rizoma.prelude.Id
+
 import domain.*
 
 object FarmOps:

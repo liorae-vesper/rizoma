@@ -3,6 +3,8 @@ package domain
 
 import java.time.Instant
 
+import prelude.Id
+
 /** Units for harvest quantities. No conversion between units is implied.
   *
   * Bags, boxes, crates, bunches, and bales count packages without assuming a fixed size or weight.

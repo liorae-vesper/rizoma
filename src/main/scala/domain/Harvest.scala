@@ -5,18 +5,6 @@ import java.time.Instant
 
 import prelude.Id
 
-/** Units for harvest quantities. No conversion between units is implied.
-  *
-  * Bags, boxes, crates, bunches, and bales count packages without assuming a fixed size or weight.
-  * Tonnes are metric; US customary units are named explicitly to distinguish their definitions.
-  */
-enum UnitOfYield:
-  case Grams, Kilograms, Tonnes
-  case Pounds, UsShortTons
-  case Liters, UsGallons, UsBushels
-  case Units, Dozens
-  case Bunches, Boxes, Crates, Bags, Bales
-
 /** Harvest quantities recorded against a crop cycle. */
 object Harvest:
   opaque type HarvestId = Id
@@ -29,6 +17,16 @@ object Harvest:
   final case class Yield private (amount: Double, unitOfYield: UnitOfYield):
     /** Returns the numeric amount in its stored unit without conversion. */
     def toDouble: Double = amount
+
+  /** Units for harvest quantities. No conversion between units is implied.
+    *
+    * Tonnes are metric; US customary units are named explicitly to distinguish their definitions.
+    */
+  enum UnitOfYield:
+    case Grams, Kilograms, Tonnes
+    case Pounds, UsShortTons
+    case Liters, UsGallons, UsBushels
+    case Units, Dozens
 
   object Yield:
     enum Error:
@@ -48,13 +46,13 @@ object Harvest:
     case InvalidYield(error: Yield.Error)
 
   /** Validated registration values; cycle existence is checked by the application. */
-  final case class Register private (
+  final case class Registration private (
       cycleId: CropCycle.CycleId,
       yieldAmount: Yield,
       harvestedAt: Instant
   )
 
-  object Register:
+  object Registration:
     /** Validates yield and retains its unit, cycle, and harvest timestamp. Defaults to kilograms.
       */
     def from(
@@ -62,9 +60,9 @@ object Harvest:
         yieldAmount: Double,
         harvestedAt: Instant,
         unitOfYield: UnitOfYield = UnitOfYield.Kilograms
-    ): Either[Constraints, Register] =
+    ): Either[Constraints, Registration] =
       Yield.from(yieldAmount, unitOfYield).left.map(Constraints.InvalidYield.apply).map { amount =>
-        Register(cycleId, amount, harvestedAt)
+        Registration(cycleId, amount, harvestedAt)
       }
 
   /** Replacement values retaining harvest and crop cycle identities. */

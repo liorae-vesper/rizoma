@@ -49,18 +49,18 @@ object CropSpecies:
     case InvalidScientificName(error: ScientificName.Error)
 
   /** Validated values for registering a species. */
-  final case class Register private (commonName: CommonName, scientificName: ScientificName)
+  final case class Registration private (commonName: CommonName, scientificName: ScientificName)
 
-  object Register:
+  object Registration:
     /** Normalizes and validates both names before constructing the registration command. */
-    def from(commonName: String, scientificName: String): Either[Constraints, Register] =
+    def from(commonName: String, scientificName: String): Either[Constraints, Registration] =
       for
         common <- CommonName.from(commonName).left.map(Constraints.InvalidCommonName.apply)
         scientific <- ScientificName
           .from(scientificName)
           .left
           .map(Constraints.InvalidScientificName.apply)
-      yield Register(common, scientific)
+      yield Registration(common, scientific)
 
   /** Replacement names for an existing species. */
   final case class Patch private[CropSpecies] (
@@ -80,6 +80,6 @@ object CropSpecies:
   ):
     /** Replaces both names after validating their raw input. */
     def patch(commonName: String, scientificName: String): Either[Constraints, Patch] =
-      Register.from(commonName, scientificName).map { registration =>
+      Registration.from(commonName, scientificName).map { registration =>
         Patch(registration.commonName, registration.scientificName, speciesId)
       }

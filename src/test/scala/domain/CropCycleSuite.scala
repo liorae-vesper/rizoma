@@ -49,7 +49,7 @@ class CropCycleSuite extends munit.ScalaCheckSuite:
     forAll(ids, ids, polygons) { (speciesId, plotId, polygon) =>
       val species = CropSpecies.SpeciesId.from(speciesId)
       val plot = Plot.PlotId.from(plotId)
-      val result = CropCycle.Register.from(species, plot, polygon).map { command =>
+      val result = CropCycle.Registration.from(species, plot, polygon).map { command =>
         assertEquals(command.speciesId, species)
         assertEquals(command.plotId, plot)
         assertEquals(command.occupiedLand, polygon)
@@ -61,7 +61,7 @@ class CropCycleSuite extends munit.ScalaCheckSuite:
   property("cycle registration validates its timestamps"):
     forAll(ids, ids, polygons) { (speciesId, plotId, polygon) =>
       assertEquals(
-        CropCycle.Register.from(
+        CropCycle.Registration.from(
           CropSpecies.SpeciesId.from(speciesId),
           Plot.PlotId.from(plotId),
           polygon,
@@ -70,7 +70,7 @@ class CropCycleSuite extends munit.ScalaCheckSuite:
         Left(CropCycle.Constraints.EndWithoutStart)
       )
       assertEquals(
-        CropCycle.Register.from(
+        CropCycle.Registration.from(
           CropSpecies.SpeciesId.from(speciesId),
           Plot.PlotId.from(plotId),
           polygon,
@@ -171,7 +171,7 @@ class CropCycleSuite extends munit.ScalaCheckSuite:
   test("cycle periods, identities, and commands cannot bypass validation"):
     assert(compileErrors("CropCycle.Period(None, None)").nonEmpty)
     assert(compileErrors("new CropCycle.Period(None, None)").nonEmpty)
-    assert(compileErrors("CropCycle.Register(null, null, null, null)").nonEmpty)
+    assert(compileErrors("CropCycle.Registration(null, null, null, null)").nonEmpty)
     assert(compileErrors("CropCycle.Patch(null, null, null, null, null)").nonEmpty)
     assert(compileErrors("""
       for id <- Id.generate() yield

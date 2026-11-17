@@ -8,6 +8,7 @@ import java.time.Instant
 
 class HarvestSuite extends munit.ScalaCheckSuite:
   import DomainGenerators.*
+  import Harvest.UnitOfYield
 
   private val amounts = Gen.choose(0.000001, 1_000_000_000.0)
   private val harvestedAt = Instant.parse("2026-03-01T12:00:00Z")
@@ -28,14 +29,19 @@ class HarvestSuite extends munit.ScalaCheckSuite:
     }
     assertNotEquals(
       Harvest.Yield.from(12, UnitOfYield.Kilograms),
-      Harvest.Yield.from(12, UnitOfYield.Bags)
+      Harvest.Yield.from(12, UnitOfYield.Liters)
     )
 
   property("harvest registration and patches retain units or explicitly replace them"):
     forAll(ids, amounts) { (id, amount) =>
       UnitOfYield.values.foreach { unit =>
         val result = for
-          command <- Harvest.Register.from(CropCycle.CycleId.from(id), amount, harvestedAt, unit)
+          command <- Harvest.Registration.from(
+            CropCycle.CycleId.from(id),
+            amount,
+            harvestedAt,
+            unit
+          )
           view = Harvest.View(
             Harvest.HarvestId.from(id),
             command.cycleId,
@@ -76,18 +82,18 @@ class HarvestSuite extends munit.ScalaCheckSuite:
   property("harvest registration validates yield and retains the cycle and timestamp"):
     forAll(ids, amounts) { (id, amount) =>
       val cycleId = CropCycle.CycleId.from(id)
-      val result = Harvest.Register.from(cycleId, amount, harvestedAt).map { command =>
+      val result = Harvest.Registration.from(cycleId, amount, harvestedAt).map { command =>
         assertEquals(command.cycleId, cycleId)
         assertEquals(command.yieldAmount.toDouble, amount)
         assertEquals(command.harvestedAt, harvestedAt)
       }
       assertEquals(result, Right(()))
       assertEquals(
-        Harvest.Register.from(cycleId, 0, harvestedAt),
+        Harvest.Registration.from(cycleId, 0, harvestedAt),
         Left(Harvest.Constraints.InvalidYield(Harvest.Yield.Error.NotGreaterThanZero))
       )
       assertEquals(
-        Harvest.Register.from(cycleId, Double.NaN, harvestedAt),
+        Harvest.Registration.from(cycleId, Double.NaN, harvestedAt),
         Left(Harvest.Constraints.InvalidYield(Harvest.Yield.Error.NotFinite))
       )
     }
@@ -132,7 +138,7 @@ class HarvestSuite extends munit.ScalaCheckSuite:
       for
         id <- Id.generate()
         amount <- Harvest.Yield.from(1)
-      yield Harvest.Register(CropCycle.CycleId.from(id), amount, java.time.Instant.EPOCH)
+      yield Harvest.Registration(CropCycle.CycleId.from(id), amount, java.time.Instant.EPOCH)
     """).nonEmpty)
     assert(compileErrors("""
       for

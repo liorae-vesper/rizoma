@@ -46,14 +46,14 @@ object Farm:
     * @param area
     *   the positive, finite area and its unit
     */
-  final case class Register private (
+  final case class Registration private (
       name: Name,
       location: Position,
       area: Area
   )
 
   /** Builds registration commands from a raw name and validated compound values. */
-  object Register:
+  object Registration:
     /** Validates the name and assembles a farm registration command.
       *
       * Position and area validation is owned by their respective constructors.
@@ -71,9 +71,9 @@ object Farm:
         name: String,
         position: Position,
         area: Area
-    ): Either[Constraints, Register] =
+    ): Either[Constraints, Registration] =
       for farmName <- Name.from(name).left.map(Constraints.InvalidName.apply)
-      yield Register(farmName, position, area)
+      yield Registration(farmName, position, area)
 
   /** A replacement of a farm's editable values, constructed within [[Farm]].
     *

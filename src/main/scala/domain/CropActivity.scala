@@ -63,22 +63,22 @@ object CropActivity:
     case InvalidEvent(error: Event.Error)
 
   /** Validated registration values; cycle existence is checked by the application. */
-  final case class Register private (
+  final case class Registration private (
       cycleId: CropCycle.CycleId,
       event: Event,
       occurredAt: Instant
   ):
     def eventType: EventType = EventType.from(event)
 
-  object Register:
+  object Registration:
     /** Validates the event and retains the supplied cycle and event timestamp. */
     def from(
         cycleId: CropCycle.CycleId,
         event: String,
         occurredAt: Instant
-    ): Either[Constraints, Register] =
+    ): Either[Constraints, Registration] =
       Event.from(event).left.map(Constraints.InvalidEvent.apply).map { description =>
-        Register(cycleId, description, occurredAt)
+        Registration(cycleId, description, occurredAt)
       }
 
   /** Replacement event values, retaining activity and crop cycle identities. */

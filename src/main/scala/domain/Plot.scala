@@ -70,7 +70,7 @@ object Plot:
     * @param status
     *   the plot's current use; defaults to active
     */
-  final case class Register(
+  final case class Registration(
       geometry: MultiPolygon,
       area: Area,
       name: Name,

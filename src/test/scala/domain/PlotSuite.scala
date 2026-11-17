@@ -113,7 +113,7 @@ class PlotSuite extends munit.ScalaCheckSuite:
   property("plots default to active and retain their status when patching other fields"):
     forAll(geometries, areas, names, ids, ids) { (geometry, area, name, farmId, plotId) =>
       val result = for validated <- Plot.Name.from(name) yield
-        val registration = Plot.Register(geometry, area, validated, farmId)
+        val registration = Plot.Registration(geometry, area, validated, farmId)
         assertEquals(registration.status, Plot.Status.Active)
         Plot.Status.values.foreach { status =>
           val view = Plot.View(geometry, area, validated, farmId, Plot.PlotId.from(plotId), status)

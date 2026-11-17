@@ -40,14 +40,14 @@ object CropCycle:
         case _                                               => Right(Period(startedAt, endedAt))
 
   /** Registration values. Polygon validity is owned by Polygon; containment is not checked here. */
-  final case class Register private (
+  final case class Registration private (
       speciesId: CropSpecies.SpeciesId,
       plotId: Plot.PlotId,
       occupiedLand: Polygon,
       period: Period
   )
 
-  object Register:
+  object Registration:
     /** Validates timestamps, defaulting to a planned cycle, and retains the supplied references. */
     def from(
         speciesId: CropSpecies.SpeciesId,
@@ -55,8 +55,8 @@ object CropCycle:
         occupiedLand: Polygon,
         startedAt: Option[Instant] = None,
         endedAt: Option[Instant] = None
-    ): Either[Constraints, Register] =
-      Period.from(startedAt, endedAt).map(Register(speciesId, plotId, occupiedLand, _))
+    ): Either[Constraints, Registration] =
+      Period.from(startedAt, endedAt).map(Registration(speciesId, plotId, occupiedLand, _))
 
   /** Editable cycle values, retaining the existing plot and cycle identities. */
   final case class Patch private[CropCycle] (

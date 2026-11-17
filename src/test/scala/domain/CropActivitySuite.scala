@@ -65,7 +65,11 @@ class CropActivitySuite extends munit.ScalaCheckSuite:
   property("activity commands derive their event type while retaining the validated text"):
     forAll(ids) { id =>
       val result = for
-        command <- CropActivity.Register.from(CropCycle.CycleId.from(id), " PLANTING ", occurredAt)
+        command <- CropActivity.Registration.from(
+          CropCycle.CycleId.from(id),
+          " PLANTING ",
+          occurredAt
+        )
         view = CropActivity.View(
           CropActivity.ActivityId.from(id),
           command.cycleId,
@@ -87,14 +91,14 @@ class CropActivitySuite extends munit.ScalaCheckSuite:
   property("activity registration validates the event and retains its cycle and timestamp"):
     forAll(ids, names) { (id, event) =>
       val cycleId = CropCycle.CycleId.from(id)
-      val result = CropActivity.Register.from(cycleId, s" $event ", occurredAt).map { command =>
+      val result = CropActivity.Registration.from(cycleId, s" $event ", occurredAt).map { command =>
         assertEquals(command.cycleId, cycleId)
         assertEquals(command.event.toString, event)
         assertEquals(command.occurredAt, occurredAt)
       }
       assertEquals(result, Right(()))
       assertEquals(
-        CropActivity.Register.from(cycleId, " ", occurredAt),
+        CropActivity.Registration.from(cycleId, " ", occurredAt),
         Left(CropActivity.Constraints.InvalidEvent(CropActivity.Event.Error.Empty))
       )
     }
@@ -129,5 +133,5 @@ class CropActivitySuite extends munit.ScalaCheckSuite:
         val activityId: CropActivity.ActivityId = Harvest.HarvestId.from(id)
         activityId
     """).nonEmpty)
-    assert(compileErrors("CropActivity.Register(null, null, null)").nonEmpty)
+    assert(compileErrors("CropActivity.Registration(null, null, null)").nonEmpty)
     assert(compileErrors("CropActivity.Patch(null, null, null, null)").nonEmpty)

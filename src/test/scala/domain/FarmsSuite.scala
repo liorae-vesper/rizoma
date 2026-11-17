@@ -49,7 +49,7 @@ class FarmsSuite extends munit.ScalaCheckSuite:
   property("farm registration normalizes the name and retains validated inputs"):
     forAll(names, positions, areas, padding) { (name, position, area, whitespace) =>
       val result = for
-        registration <- Farm.Register.from(whitespace + name + whitespace, position, area)
+        registration <- Farm.Registration.from(whitespace + name + whitespace, position, area)
         canonical <- Farm.Name.from(name)
       yield
         assertEquals(registration.name, canonical)
@@ -63,7 +63,7 @@ class FarmsSuite extends munit.ScalaCheckSuite:
       val expected =
         if name.trim.isEmpty then Farm.Name.Error.Empty else Farm.Name.Error.TooLong(100)
       assertEquals(
-        Farm.Register.from(name, position, area),
+        Farm.Registration.from(name, position, area),
         Left(Farm.Constraints.InvalidName(expected))
       )
     }
@@ -102,14 +102,14 @@ class FarmsSuite extends munit.ScalaCheckSuite:
         name <- Farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield Farm.Register(name, position, area)
+      yield Farm.Registration(name, position, area)
     """).nonEmpty)
     assert(compileErrors("""
       for
         name <- Farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield new Farm.Register(name, position, area)
+      yield new Farm.Registration(name, position, area)
     """).nonEmpty)
     assert(compileErrors("""
       for

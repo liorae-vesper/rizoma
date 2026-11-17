@@ -49,7 +49,7 @@ class CropSpeciesSuite extends munit.ScalaCheckSuite:
   property("species registration validates and normalizes both names"):
     forAll(names, names, padding) { (commonName, scientificName, whitespace) =>
       val result =
-        for command <- CropSpecies.Register
+        for command <- CropSpecies.Registration
             .from(whitespace + commonName + whitespace, scientificName)
         yield
           assertEquals(command.commonName.toString, commonName)
@@ -59,18 +59,18 @@ class CropSpeciesSuite extends munit.ScalaCheckSuite:
 
   test("species registration reports the name that failed validation"):
     assertEquals(
-      CropSpecies.Register.from(" ", "Phaseolus vulgaris"),
+      CropSpecies.Registration.from(" ", "Phaseolus vulgaris"),
       Left(CropSpecies.Constraints.InvalidCommonName(CropSpecies.CommonName.Error.Empty))
     )
     assertEquals(
-      CropSpecies.Register.from("Beans", " "),
+      CropSpecies.Registration.from("Beans", " "),
       Left(CropSpecies.Constraints.InvalidScientificName(CropSpecies.ScientificName.Error.Empty))
     )
 
   property("species patches retain identity and validate replacement names"):
     forAll(ids, names, names) { (id, commonName, scientificName) =>
       val result = for
-        original <- CropSpecies.Register.from("Beans", "Phaseolus vulgaris")
+        original <- CropSpecies.Registration.from("Beans", "Phaseolus vulgaris")
         view = CropSpecies.View(
           CropSpecies.SpeciesId.from(id),
           original.commonName,
@@ -102,5 +102,5 @@ class CropSpeciesSuite extends munit.ScalaCheckSuite:
         val speciesId: CropSpecies.SpeciesId = id
         speciesId
     """).nonEmpty)
-    assert(compileErrors("CropSpecies.Register(null, null)").nonEmpty)
+    assert(compileErrors("CropSpecies.Registration(null, null)").nonEmpty)
     assert(compileErrors("CropSpecies.Patch(null, null, null)").nonEmpty)

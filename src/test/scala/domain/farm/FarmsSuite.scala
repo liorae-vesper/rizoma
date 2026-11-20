@@ -9,8 +9,8 @@ class FarmsSuite extends munit.ScalaCheckSuite:
   property("farm names accept valid input and normalize surrounding whitespace"):
     forAll(names, padding, padding) { (name, before, after) =>
       val result = for
-        canonical <- Farm.Name.from(name)
-        padded <- Farm.Name.from(before + name + after)
+        canonical <- farm.Name.from(name)
+        padded <- farm.Name.from(before + name + after)
       yield
         assertEquals(canonical.toString, name)
         assertEquals(padded, canonical)
@@ -19,27 +19,27 @@ class FarmsSuite extends munit.ScalaCheckSuite:
 
   property("farm names reject empty and whitespace-only input"):
     forAll(padding) { name =>
-      assertEquals(Farm.Name.from(name), Left(Farm.Name.Error.Empty))
+      assertEquals(farm.Name.from(name), Left(farm.Name.Error.Empty))
     }
 
   property("farm names reject excessive length after trimming"):
     forAll(longNames, padding, padding) { (name, before, after) =>
-      assertEquals(Farm.Name.from(before + name + after), Left(Farm.Name.Error.TooLong(100)))
+      assertEquals(farm.Name.from(before + name + after), Left(farm.Name.Error.TooLong(100)))
     }
 
   test("farm name length boundaries apply after trimming"):
-    assert(Farm.Name.from("a").isRight)
-    assert(Farm.Name.from(" \t" + "a" * 100 + "\n ").isRight)
-    assertEquals(Farm.Name.from("a" * 101), Left(Farm.Name.Error.TooLong(100)))
-    assert(Farm.Name.from("🌱" * 50).isRight)
-    assertEquals(Farm.Name.from("🌱" * 51), Left(Farm.Name.Error.TooLong(100)))
+    assert(farm.Name.from("a").isRight)
+    assert(farm.Name.from(" \t" + "a" * 100 + "\n ").isRight)
+    assertEquals(farm.Name.from("a" * 101), Left(farm.Name.Error.TooLong(100)))
+    assert(farm.Name.from("🌱" * 50).isRight)
+    assertEquals(farm.Name.from("🌱" * 51), Left(farm.Name.Error.TooLong(100)))
 
   test("farm names preserve internal whitespace and Unicode"):
     val raw = "Sítio  São João 田"
     val result = for
-      name <- Farm.Name.from(raw)
-      padded <- Farm.Name.from(" \t" + raw + "\n")
-      collapsed <- Farm.Name.from("Sítio São João 田")
+      name <- farm.Name.from(raw)
+      padded <- farm.Name.from(" \t" + raw + "\n")
+      collapsed <- farm.Name.from("Sítio São João 田")
     yield
       assertEquals(name.toString, raw)
       assertEquals(padded, name)
@@ -49,8 +49,8 @@ class FarmsSuite extends munit.ScalaCheckSuite:
   property("farm registration normalizes the name and retains validated inputs"):
     forAll(names, positions, areas, padding) { (name, position, area, whitespace) =>
       val result = for
-        registration <- Farm.Registration.from(whitespace + name + whitespace, position, area)
-        canonical <- Farm.Name.from(name)
+        registration <- farm.Registration.from(whitespace + name + whitespace, position, area)
+        canonical <- farm.Name.from(name)
       yield
         assertEquals(registration.name, canonical)
         assertEquals(registration.location, position)
@@ -61,10 +61,10 @@ class FarmsSuite extends munit.ScalaCheckSuite:
   property("farm registration maps either name error into its constraints"):
     forAll(invalidNames, positions, areas) { (name, position, area) =>
       val expected =
-        if name.trim.isEmpty then Farm.Name.Error.Empty else Farm.Name.Error.TooLong(100)
+        if name.trim.isEmpty then farm.Name.Error.Empty else farm.Name.Error.TooLong(100)
       assertEquals(
-        Farm.Registration.from(name, position, area),
-        Left(Farm.Constraints.InvalidName(expected))
+        farm.Registration.from(name, position, area),
+        Left(farm.Constraints.InvalidName(expected))
       )
     }
 
@@ -72,9 +72,9 @@ class FarmsSuite extends munit.ScalaCheckSuite:
     forAll(ids, names, positions, areas, names, positions, areas, padding) {
       (id, oldName, oldPosition, oldArea, name, position, area, whitespace) =>
         val result = for
-          original <- Farm.Name.from(oldName)
-          canonical <- Farm.Name.from(name)
-          patch <- Farm
+          original <- farm.Name.from(oldName)
+          canonical <- farm.Name.from(name)
+          patch <- farm
             .View(id, original, oldPosition, oldArea)
             .patch(whitespace + name + whitespace, position, area)
         yield
@@ -87,43 +87,43 @@ class FarmsSuite extends munit.ScalaCheckSuite:
 
   property("farm patches map either name error into their constraints"):
     forAll(ids, names, positions, areas, invalidNames) { (id, oldName, position, area, name) =>
-      val result = for original <- Farm.Name.from(oldName) yield
-        val view = Farm.View(id, original, position, area)
+      val result = for original <- farm.Name.from(oldName) yield
+        val view = farm.View(id, original, position, area)
         val expected =
-          if name.trim.isEmpty then Farm.Name.Error.Empty else Farm.Name.Error.TooLong(100)
-        assertEquals(view.patch(name, position, area), Left(Farm.Constraints.InvalidName(expected)))
+          if name.trim.isEmpty then farm.Name.Error.Empty else farm.Name.Error.TooLong(100)
+        assertEquals(view.patch(name, position, area), Left(farm.Constraints.InvalidName(expected)))
       assertEquals(result, Right(()))
     }
 
   test("farm names and patch construction cannot bypass their boundaries"):
-    assert(compileErrors("val name: Farm.Name = \"raw\"").nonEmpty)
+    assert(compileErrors("val name: farm.Name = \"raw\"").nonEmpty)
     assert(compileErrors("""
       for
-        name <- Farm.Name.from("Cedar")
+        name <- farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield Farm.Registration(name, position, area)
+      yield farm.Registration(name, position, area)
     """).nonEmpty)
     assert(compileErrors("""
       for
-        name <- Farm.Name.from("Cedar")
+        name <- farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
-      yield new Farm.Registration(name, position, area)
+      yield new farm.Registration(name, position, area)
     """).nonEmpty)
     assert(compileErrors("""
       for
-        name <- Farm.Name.from("Cedar")
+        name <- farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield Farm.Patch(name, position, area, id)
+      yield farm.Patch(name, position, area, id)
     """).nonEmpty)
     assert(compileErrors("""
       for
-        name <- Farm.Name.from("Cedar")
+        name <- farm.Name.from("Cedar")
         area <- Area.from(1)
         position <- Position.from(longitude = 0, latitude = 0).toRight("Invalid position")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield new Farm.Patch(name, position, area, id)
+      yield new farm.Patch(name, position, area, id)
     """).nonEmpty)

@@ -9,8 +9,8 @@ class PlotSuite extends munit.ScalaCheckSuite:
   property("plot names accept valid input and normalize surrounding whitespace"):
     forAll(names, padding, padding) { (name, before, after) =>
       val result = for
-        canonical <- Plot.Name.from(name)
-        padded <- Plot.Name.from(before + name + after)
+        canonical <- plot.Name.from(name)
+        padded <- plot.Name.from(before + name + after)
       yield
         assertEquals(canonical.toString, name)
         assertEquals(padded, canonical)
@@ -19,27 +19,27 @@ class PlotSuite extends munit.ScalaCheckSuite:
 
   property("plot names reject empty and whitespace-only input"):
     forAll(padding) { name =>
-      assertEquals(Plot.Name.from(name), Left(Plot.Name.Error.Empty))
+      assertEquals(plot.Name.from(name), Left(plot.Name.Error.Empty))
     }
 
   property("plot names reject excessive length after trimming"):
     forAll(longNames, padding, padding) { (name, before, after) =>
-      assertEquals(Plot.Name.from(before + name + after), Left(Plot.Name.Error.TooLong(100)))
+      assertEquals(plot.Name.from(before + name + after), Left(plot.Name.Error.TooLong(100)))
     }
 
   test("plot name length boundaries apply after trimming"):
-    assert(Plot.Name.from("a").isRight)
-    assert(Plot.Name.from(" \t" + "a" * 100 + "\n ").isRight)
-    assertEquals(Plot.Name.from("a" * 101), Left(Plot.Name.Error.TooLong(100)))
-    assert(Plot.Name.from("🌱" * 50).isRight)
-    assertEquals(Plot.Name.from("🌱" * 51), Left(Plot.Name.Error.TooLong(100)))
+    assert(plot.Name.from("a").isRight)
+    assert(plot.Name.from(" \t" + "a" * 100 + "\n ").isRight)
+    assertEquals(plot.Name.from("a" * 101), Left(plot.Name.Error.TooLong(100)))
+    assert(plot.Name.from("🌱" * 50).isRight)
+    assertEquals(plot.Name.from("🌱" * 51), Left(plot.Name.Error.TooLong(100)))
 
   test("plot names preserve internal whitespace and Unicode"):
     val raw = "Talhão  São João 田"
     val result = for
-      name <- Plot.Name.from(raw)
-      padded <- Plot.Name.from(" \t" + raw + "\n")
-      collapsed <- Plot.Name.from("Talhão São João 田")
+      name <- plot.Name.from(raw)
+      padded <- plot.Name.from(" \t" + raw + "\n")
+      collapsed <- plot.Name.from("Talhão São João 田")
     yield
       assertEquals(name.toString, raw)
       assertEquals(padded, name)
@@ -59,9 +59,9 @@ class PlotSuite extends munit.ScalaCheckSuite:
       (original, geometry, area, name, whitespace) =>
         val (oldGeometry, oldArea, oldName, farmId, plotId) = original
         val result = for
-          originalName <- Plot.Name.from(oldName)
-          canonical <- Plot.Name.from(name)
-          view = Plot.View(oldGeometry, oldArea, originalName, farmId, Plot.PlotId.from(plotId))
+          originalName <- plot.Name.from(oldName)
+          canonical <- plot.Name.from(name)
+          view = plot.View(oldGeometry, oldArea, originalName, farmId, plot.PlotId.from(plotId))
           patch <- view.patch(geometry, area, whitespace + name + whitespace)
         yield
           assertEquals(patch.plotId, view.plotId)
@@ -75,48 +75,48 @@ class PlotSuite extends munit.ScalaCheckSuite:
   property("plot patches map either name error into their constraints"):
     forAll(geometries, areas, names, ids, ids, invalidNames) {
       (geometry, area, oldName, farmId, plotId, name) =>
-        val result = for originalName <- Plot.Name.from(oldName) yield
-          val view = Plot.View(geometry, area, originalName, farmId, Plot.PlotId.from(plotId))
+        val result = for originalName <- plot.Name.from(oldName) yield
+          val view = plot.View(geometry, area, originalName, farmId, plot.PlotId.from(plotId))
           val expected =
-            if name.trim.isEmpty then Plot.Name.Error.Empty else Plot.Name.Error.TooLong(100)
+            if name.trim.isEmpty then plot.Name.Error.Empty else plot.Name.Error.TooLong(100)
           assertEquals(
             view.patch(geometry, area, name),
-            Left(Plot.Constraints.InvalidName(expected))
+            Left(plot.Constraints.InvalidName(expected))
           )
         assertEquals(result, Right(()))
     }
 
   test("plot names and patch construction cannot bypass their boundaries"):
-    assert(compileErrors("val name: Plot.Name = \"raw\"").nonEmpty)
+    assert(compileErrors("val name: plot.Name = \"raw\"").nonEmpty)
     assert(compileErrors("""
       for uuid <- UUIDv7.parse("00000000-0000-7000-8000-000000000000") yield
-        val id: Plot.PlotId = Id.fromUUIDv7(uuid)
+        val id: plot.PlotId = Id.fromUUIDv7(uuid)
         id
     """).nonEmpty)
     assert(compileErrors("""
       for
-        name <- Plot.Name.from("North")
+        name <- plot.Name.from("North")
         area <- Area.from(1)
         geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id), Plot.Status.Active)
+      yield plot.Patch(geometry, area, name, id, plot.PlotId.from(id), plot.Status.Active)
     """).nonEmpty)
     assert(compileErrors("""
       for
-        name <- Plot.Name.from("North")
+        name <- plot.Name.from("North")
         area <- Area.from(1)
         geometry <- MultiPolygon.from(Nil).toRight("Invalid geometry")
         id <- Id.parse("00000000-0000-7000-8000-000000000000")
-      yield new Plot.Patch(geometry, area, name, id, Plot.PlotId.from(id), Plot.Status.Active)
+      yield new plot.Patch(geometry, area, name, id, plot.PlotId.from(id), plot.Status.Active)
     """).nonEmpty)
 
   property("plots default to active and retain their status when patching other fields"):
     forAll(geometries, areas, names, ids, ids) { (geometry, area, name, farmId, plotId) =>
-      val result = for validated <- Plot.Name.from(name) yield
-        val registration = Plot.Registration(geometry, area, validated, farmId)
-        assertEquals(registration.status, Plot.Status.Active)
-        Plot.Status.values.foreach { status =>
-          val view = Plot.View(geometry, area, validated, farmId, Plot.PlotId.from(plotId), status)
+      val result = for validated <- plot.Name.from(name) yield
+        val registration = plot.Registration(geometry, area, validated, farmId)
+        assertEquals(registration.status, plot.Status.Active)
+        plot.Status.values.foreach { status =>
+          val view = plot.View(geometry, area, validated, farmId, plot.PlotId.from(plotId), status)
           assertEquals(view.patch(geometry, area, name).map(_.status), Right(status))
         }
       assertEquals(result, Right(()))
@@ -125,11 +125,11 @@ class PlotSuite extends munit.ScalaCheckSuite:
   property("plot patches can explicitly change the status while retaining identities"):
     forAll(geometries, areas, names, ids, ids) { (geometry, area, name, farmId, plotId) =>
       val result = for
-        validated <- Plot.Name.from(name)
-        view = Plot.View(geometry, area, validated, farmId, Plot.PlotId.from(plotId))
-        patch <- view.patch(geometry, area, name, Plot.Status.Resting)
+        validated <- plot.Name.from(name)
+        view = plot.View(geometry, area, validated, farmId, plot.PlotId.from(plotId))
+        patch <- view.patch(geometry, area, name, plot.Status.Resting)
       yield
-        assertEquals(patch.status, Plot.Status.Resting)
+        assertEquals(patch.status, plot.Status.Resting)
         assertEquals(patch.plotId, view.plotId)
         assertEquals(patch.currentFarm, farmId)
       assertEquals(result, Right(()))

@@ -65,10 +65,22 @@ final case class Patch private[cycle] (
     occupiedLand: Polygon,
     period: Period,
     plotId: plot.PlotId,
-    cycleId: CycleId
+    cycleId: CycleId,
+    expected: View
 )
 
-final case class Destroy(cycleId: CycleId)
+final case class Delete(cycleId: CycleId)
+
+/** Creates a cycle already started at the supplied planting time. */
+final case class Plant(
+    speciesId: crop.species.SpeciesId,
+    plotId: plot.PlotId,
+    occupiedLand: Polygon,
+    plantedAt: Instant
+)
+
+/** Ends an active cycle at the supplied time. */
+final case class Finish(cycleId: CycleId, finishedAt: Instant)
 
 /** A cycle snapshot with a period validated by Period.from. */
 final case class View(
@@ -93,5 +105,5 @@ final case class View(
     else if period.endedAt.isDefined && endedAt.isEmpty then Left(Constraints.CannotClearEnd)
     else
       Period.from(startedAt, endedAt).map { replacement =>
-        Patch(speciesId, occupiedLand, replacement, plotId, cycleId)
+        Patch(speciesId, occupiedLand, replacement, plotId, cycleId, this)
       }

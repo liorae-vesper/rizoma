@@ -134,5 +134,5 @@ class CropActivitySuite extends munit.ScalaCheckSuite:
         val activityId: crop.activity.ActivityId = harvest.HarvestId.from(id)
         activityId
     """).nonEmpty)
-    assert(compileErrors("crop.activity.Registration(null, null, null)").nonEmpty)
-    assert(compileErrors("crop.activity.Patch(null, null, null, null)").nonEmpty)
+    assert(compileErrors("crop.activity.Registration(null, null, null, null)").nonEmpty)
+    assert(compileErrors("crop.activity.Patch(null, null, null, null, null, null)").nonEmpty)

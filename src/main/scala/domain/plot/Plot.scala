@@ -101,7 +101,8 @@ final case class Patch private[plot] (
     newName: Name,
     currentFarm: Id,
     plotId: PlotId,
-    status: Status
+    status: Status,
+    expected: View
 )
 
 /** A command requesting removal of a plot.
@@ -109,7 +110,19 @@ final case class Patch private[plot] (
   * @param plotId
   *   the identity of the plot to remove
   */
-final case class Destroy(plotId: PlotId)
+final case class Delete(plotId: PlotId)
+
+/** Replaces the geographic boundary of an existing plot. */
+final case class Mark(plotId: PlotId, geometry: MultiPolygon)
+
+/** Removes a plot's boundary, represented by an empty multipolygon. */
+final case class Demark(plotId: PlotId)
+
+/** Replaces the declared area without changing the boundary. */
+final case class Remeasure(plotId: PlotId, area: Area)
+
+final case class Activate(plotId: PlotId)
+final case class Resting(plotId: PlotId)
 
 /** A snapshot of a plot used to prepare commands for that plot.
   *
@@ -157,4 +170,4 @@ final case class View(
       newStatus: Status = status
   ): Either[Constraints, Patch] =
     for name <- Name.from(newName).left.map(Constraints.InvalidName.apply)
-    yield Patch(newGeometry, newArea, name, currentFarm, plotId, newStatus)
+    yield Patch(newGeometry, newArea, name, currentFarm, plotId, newStatus, this)

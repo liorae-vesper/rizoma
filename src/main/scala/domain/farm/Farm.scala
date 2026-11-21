@@ -12,6 +12,8 @@ opaque type Name = String
 
 /** Construction and validation errors for farm names. */
 object Name:
+  extension (name: Name) def value: String = name
+
   /** Reasons a farm name cannot be created. */
   enum Error:
     /** The input is empty after trimming whitespace. */

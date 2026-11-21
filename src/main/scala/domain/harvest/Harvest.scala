@@ -75,7 +75,7 @@ final case class Patch private[harvest] (
     harvestId: HarvestId
 )
 
-final case class Destroy(harvestId: HarvestId)
+final case class Delete(harvestId: HarvestId)
 
 /** A harvest snapshot used to prepare commands for the same harvest and cycle. */
 final case class View(

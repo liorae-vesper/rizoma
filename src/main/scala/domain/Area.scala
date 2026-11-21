@@ -12,6 +12,20 @@ enum UnitOfArea:
   /** Area measured in acres. */
   case Acres
 
+  def asString: String =
+    this match
+      case UnitOfArea.SquareMeters => "square_meters"
+      case UnitOfArea.Hectares     => "hectares"
+      case UnitOfArea.Acres        => "acres"
+
+object UnitOfArea:
+  def from(raw: String): Option[UnitOfArea] =
+    raw match
+      case "square_meters" => Some(SquareMeters)
+      case "hectares"      => Some(Hectares)
+      case "acres"         => Some(Acres)
+      case _               => None
+
 /** Reasons an area measurement is invalid. */
 enum AreaError:
   /** The area value is not finite. */

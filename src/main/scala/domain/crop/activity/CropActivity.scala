@@ -67,7 +67,8 @@ enum Constraints:
 final case class Registration private (
     cycleId: crop.cycle.CycleId,
     event: Event,
-    occurredAt: Instant
+    occurredAt: Instant,
+    journal: Journal
 ):
   def eventType: EventType = event.eventType
 
@@ -76,10 +77,11 @@ object Registration:
   def from(
       cycleId: crop.cycle.CycleId,
       event: String,
-      occurredAt: Instant
+      occurredAt: Instant,
+      journal: Journal = Journal.empty
   ): Either[Constraints, Registration] =
     Event.from(event).left.map(Constraints.InvalidEvent.apply).map { description =>
-      Registration(cycleId, description, occurredAt)
+      Registration(cycleId, description, occurredAt, journal)
     }
 
 /** Replacement event values, retaining activity and crop cycle identities. */
@@ -87,23 +89,30 @@ final case class Patch private[activity] (
     event: Event,
     occurredAt: Instant,
     cycleId: crop.cycle.CycleId,
-    activityId: ActivityId
+    activityId: ActivityId,
+    journal: Journal,
+    expected: View
 ):
   def eventType: EventType = event.eventType
 
-final case class Destroy(activityId: ActivityId)
+final case class Delete(activityId: ActivityId)
 
 /** An activity snapshot used to prepare commands for the same activity and cycle. */
 final case class View(
     activityId: ActivityId,
     cycleId: crop.cycle.CycleId,
     event: Event,
-    occurredAt: Instant
+    occurredAt: Instant,
+    journal: Journal = Journal.empty
 ):
   def eventType: EventType = event.eventType
 
   /** Validates a replacement event and replaces its occurrence timestamp. */
-  def patch(event: String, occurredAt: Instant): Either[Constraints, Patch] =
+  def patch(
+      event: String,
+      occurredAt: Instant,
+      journal: Journal = this.journal
+  ): Either[Constraints, Patch] =
     Event.from(event).left.map(Constraints.InvalidEvent.apply).map { description =>
-      Patch(description, occurredAt, cycleId, activityId)
+      Patch(description, occurredAt, cycleId, activityId, journal, this)
     }

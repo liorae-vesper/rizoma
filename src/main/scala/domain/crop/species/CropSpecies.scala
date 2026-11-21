@@ -72,7 +72,7 @@ final case class Patch private[species] (
 )
 
 /** Requests removal; relationships and species existence are checked by the application. */
-final case class Destroy(speciesId: SpeciesId)
+final case class Delete(speciesId: SpeciesId)
 
 /** A species snapshot used to prepare commands while retaining its identity. */
 final case class View(

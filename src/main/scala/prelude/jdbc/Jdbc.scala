@@ -148,10 +148,16 @@ final class SqlSession private[jdbc] (private val conn: Connection):
   * @param ds
   *   connection provider
   */
-final class Database(ds: DataSource):
+final class Database(ds: DataSource, initializeConnection: Connection => Unit = _ => ()):
   /** Obtains a connection, executes a callback, and closes it on completion or failure. */
   private def withConnection[A](run: Connection => A): A =
-    Using.resource(ds.getConnection)(run)
+    Using.resource(ds.getConnection) { conn =>
+      initializeConnection(conn)
+      run(conn)
+    }
+
+  def withConnectionInitializer(initialize: Connection => Unit): Database =
+    new Database(ds, conn => { initializeConnection(conn); initialize(conn) })
 
   /** Executes SQL producing a ResultSet, including SELECT and statements with RETURNING.
     *

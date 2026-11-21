@@ -126,6 +126,9 @@ object Position:
   * multiple members can together contain a geometry even if no single member does.
   */
 sealed trait Geometry:
+  /** Tests whether the geometry is topologically valid in the planar coordinate model. */
+  final def isValid: Boolean = GeometryTopology.isValid(this)
+
   /** Tests whether every point of `other` belongs to this geometry and their interiors intersect.
     *
     * This relation is directional. A point or line lying entirely on a polygon boundary is not

@@ -8,6 +8,8 @@ import org.locationtech.jts.operation.relateng.{RelateNG, RelatePredicate}
 private object GeometryTopology:
   private val factory = new jts.GeometryFactory()
 
+  def isValid(geometry: Geometry): Boolean = toJts(geometry).isValid
+
   def contains(left: Geometry, right: Geometry): Boolean =
     val target = toJts(right)
     RelateNG.relate(containmentSource(left, target), target, RelatePredicate.contains())
